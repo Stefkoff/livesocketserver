@@ -9,7 +9,6 @@
 namespace MyApp;
 
 use Ratchet\ConnectionInterface;
-use Predis\Client as PredisClient;
 
 
 class Clients{
@@ -21,12 +20,6 @@ class Clients{
     public function __construct()
     {
         $this->clients = array();
-
-        $this->redis = new PredisClient([
-            'scheme' => 'tcp',
-            'host' => 'localhost',
-            'port' => '6379'
-        ]);
     }
 
     public function find(ConnectionInterface $conn){
@@ -50,7 +43,6 @@ class Clients{
     public function addClient(ConnectionInterface $conn){
         $newClient = new Client($conn);
         $this->clients[] = $newClient;
-        $this->redis->lpush('users', $newClient->id);
     }
 
     public function getClients(){
@@ -65,8 +57,6 @@ class Clients{
 
             if($client->isSameClient($conn)){
                 unset($this->clients[$key]);
-                $this->redis->lRem('users', 1, $client->id);
-                break;
             }
         }
     }
