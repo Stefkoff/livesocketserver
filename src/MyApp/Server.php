@@ -40,7 +40,6 @@ class Server implements MessageComponentInterface {
 			/**
 			 * @var $client Client
 			 */
-			echo $client->getTopic();
 			if($client->getTopic() === $topic){
 				$client->send($message);
 			}
