@@ -75,4 +75,13 @@ class Clients{
         return count($this->clients);
     }
 
+    public function log(){
+        $result = [];
+        foreach($this->clients as $key => $client){
+            $result = array_merge($result, $client->log());
+        }
+
+        return $result;
+    }
+
 }

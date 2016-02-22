@@ -53,4 +53,11 @@ class Client extends \SplObjectStorage {
     public function getConnection(){
         return $this->connection;
     }
+
+    public function log(){
+        return  [
+            'id' => $this->id,
+            'topic' => $this->topic
+        ];
+    }
 }

@@ -6,6 +6,8 @@ use Predis\Client as RedisClient;
 
 class Server implements MessageComponentInterface {
 
+	const SUBSCRIBE_TYPE_ACTIVE_USERS = 'activeUsers';
+
 	/**
 	 * @var Clients
 	 */
@@ -23,6 +25,14 @@ class Server implements MessageComponentInterface {
 	public function onOpen(ConnectionInterface $conn) {
 		$this->clients->addClient($conn);
 		echo "New connection! ({$conn->resourceId})\n";
+		$this->publishActiveUsers();
+	}
+
+	public function publishActiveUsers(){
+		$this->publish('activeUsers', json_encode([
+			'topic' => self::SUBSCRIBE_TYPE_ACTIVE_USERS,
+			'data' => $this->clients->getClientsNum()
+		]));
 	}
 
 	public function publish($topic, $message){
@@ -30,6 +40,7 @@ class Server implements MessageComponentInterface {
 			/**
 			 * @var $client Client
 			 */
+			echo $client->getTopic();
 			if($client->getTopic() === $topic){
 				$client->send($message);
 			}
@@ -53,11 +64,14 @@ class Server implements MessageComponentInterface {
 				case Message::MESSAGE_TYPE_SUBSCRIBE:
 					$client = $this->clients->find($from);
 
-					echo $message->topic;
-
 					if($client !== false){
 						$client->setTopic($message->topic);
 					}
+
+					if($message->topic == self::SUBSCRIBE_TYPE_ACTIVE_USERS){
+						$this->publishActiveUsers();
+					}
+
 					break;
 				case Message::MESSAGE_TYPE_PUBLISH:
 					$this->publish($message->topic, $message->message);
@@ -74,6 +88,7 @@ class Server implements MessageComponentInterface {
     public function onClose(ConnectionInterface $conn) {
 		$this->clients->removeClient($conn);
 		echo "Connection {$conn->resourceId} has disconect\n";
+		$this->publishActiveUsers();
     }
 
     public function onError(ConnectionInterface $conn, \Exception $e) {
@@ -81,5 +96,6 @@ class Server implements MessageComponentInterface {
 		$client = $this->clients->find($conn);
 		$this->clients->removeClient($conn);
 		$client->close();
+		$this->publishActiveUsers();
     }
 }
